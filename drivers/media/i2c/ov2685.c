@@ -202,7 +202,7 @@ static struct regval ov2685_1600x1200_regs[] = {
 	{REG_NULL, 0x00}
 };
 
-#define OV2685_LINK_FREQ_330MHZ		330000000
+#define OV2685_LINK_FREQ_330MHZ		1000000000
 static const s64 link_freq_menu_items[] = {
 	OV2685_LINK_FREQ_330MHZ
 };
@@ -226,14 +226,26 @@ static const int ov2685_test_pattern_val[] = {
 };
 
 static const struct ov2685_mode supported_modes[] = {
+#if 0
+//4k
 	{
-		.width = 1600,
-		.height = 1200,
+		.width = 3840,
+		.height = 2160,
 		.exp_def = 0x04ee,
-		.hts_def = 0x06a4,
-		.vts_def = 0x050e,
+		.hts_def = 0x1068,
+		.vts_def = 0x08fc,
 		.reg_list = ov2685_1600x1200_regs,
 	},
+#else
+	{
+		.width = 5120,
+		.height = 2880,
+		.exp_def = 0x04ee,
+		.hts_def = 0x14fa,
+		.vts_def = 0x0b4a,
+		.reg_list = ov2685_1600x1200_regs,
+	},
+#endif
 };
 
 /* Write registers up to 4 at a time */
@@ -245,6 +257,10 @@ static int ov2685_write_reg(struct i2c_client *client, u16 reg,
 	u8 buf[6];
 	u8 *val_p;
 	__be32 val_be;
+
+#ifndef DAISEN_DEBUG
+	return 0;
+#endif
 
 	if (len > 4)
 		return -EINVAL;
@@ -316,7 +332,9 @@ static int ov2685_read_reg(struct i2c_client *client, u16 reg,
 static void ov2685_fill_fmt(struct ov2685 *ov2685,
 			    struct v4l2_mbus_framefmt *fmt)
 {
-	fmt->code = MEDIA_BUS_FMT_SBGGR10_1X10;
+	fmt->code = MEDIA_BUS_FMT_SBGGR8_1X8;
+	//fmt->code = MEDIA_BUS_FMT_SBGGR10_1X10;
+	//fmt->code = MEDIA_BUS_FMT_RGB888_1X24; /* TODO Test DSI */
 	fmt->width = ov2685->cur_mode->width;
 	fmt->height = ov2685->cur_mode->height;
 	fmt->field = V4L2_FIELD_NONE;
@@ -406,6 +424,10 @@ static int __ov2685_power_on(struct ov2685 *ov2685)
 	int ret;
 	struct device *dev = &ov2685->client->dev;
 
+#ifndef DAISEN_DEBUG
+	return 0;
+#endif
+
 	ret = clk_prepare_enable(ov2685->xvclk);
 	if (ret < 0) {
 		dev_err(dev, "Failed to enable xvclk\n");
@@ -449,6 +471,10 @@ disable_xvclk:
 
 static void __ov2685_power_off(struct ov2685 *ov2685)
 {
+#ifndef DAISEN_DEBUG
+	return;
+#endif
+
 	/* 512 xvclk cycles after the last SCCB transaction or MIPI frame end */
 	usleep_range(30, 50);
 	clk_disable_unprepare(ov2685->xvclk);
@@ -715,12 +741,12 @@ static int ov2685_check_sensor_id(struct ov2685 *ov2685,
 	ov2685_read_reg(client, OV2685_REG_CHIP_ID,
 			OV2685_REG_VALUE_16BIT, &id);
 	__ov2685_power_off(ov2685);
-
+#ifdef DAISEN_DEBUG
 	if (id != CHIP_ID) {
 		dev_err(dev, "Wrong camera sensor id(%04x)\n", id);
 		return -EINVAL;
 	}
-
+#endif
 	dev_info(dev, "Detected OV%04x sensor\n", CHIP_ID);
 
 	return 0;
@@ -739,7 +765,7 @@ static int ov2685_probe(struct i2c_client *client,
 
 	ov2685->client = client;
 	ov2685->cur_mode = &supported_modes[0];
-
+#ifdef DAISEN_DEBUG
 	ov2685->xvclk = devm_clk_get(dev, "xvclk");
 	if (IS_ERR(ov2685->xvclk)) {
 		dev_err(dev, "Failed to get xvclk\n");
@@ -762,7 +788,7 @@ static int ov2685_probe(struct i2c_client *client,
 		dev_err(dev, "Failed to get dovdd-supply\n");
 		return -EINVAL;
 	}
-
+#endif
 	mutex_init(&ov2685->mutex);
 	v4l2_i2c_subdev_init(&ov2685->subdev, client, &ov2685_subdev_ops);
 	ret = ov2685_initialize_controls(ov2685);
@@ -792,6 +818,9 @@ static int ov2685_probe(struct i2c_client *client,
 	}
 
 	pm_runtime_enable(dev);
+
+	pr_info("daisen>>>>>>sensor ov2685 register success\n");
+
 	return 0;
 
 clean_entity:
@@ -819,6 +848,12 @@ static int ov2685_remove(struct i2c_client *client)
 	return 0;
 }
 
+static const struct i2c_device_id ov2685_id[] = {
+	{ "ov2685", 0 },
+	{ /* sentinel */ },
+};
+MODULE_DEVICE_TABLE(i2c, ov2685_id);
+
 static const struct of_device_id ov2685_of_match[] = {
 	{ .compatible = "ovti,ov2685" },
 	{},
@@ -831,8 +866,9 @@ static struct i2c_driver ov2685_i2c_driver = {
 		.pm = &ov2685_pm_ops,
 		.of_match_table = ov2685_of_match
 	},
-	.probe		= &ov2685_probe,
-	.remove		= &ov2685_remove,
+	.probe		= ov2685_probe,
+	.remove		= ov2685_remove,
+	.id_table	= ov2685_id,
 };
 
 module_i2c_driver(ov2685_i2c_driver);

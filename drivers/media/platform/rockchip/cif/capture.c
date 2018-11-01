@@ -448,7 +448,6 @@ static void rkcif_assign_new_buffer_pingpong(struct rkcif_stream *stream,
 			stream->curr_buf = NULL;
 		if (stream->frame_phase == 1)
 			stream->next_buf = NULL;
-
 		buffer = NULL;
 	}
 	spin_unlock(&stream->vbq_lock);
