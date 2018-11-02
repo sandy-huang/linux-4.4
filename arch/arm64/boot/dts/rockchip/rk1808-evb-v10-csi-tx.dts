@@ -78,7 +78,7 @@
 		dsi,lanes = <4>;
 
 		display-timings {
-			native-mode = <&timing_5k>;
+			native-mode = <&timing_4k>;
 
 			timing_720p: timing-720p {
 				clock-frequency = <32000000>;
@@ -111,18 +111,10 @@
 				pixelclk-active = <0>;
 			};
 			timing_4k: timing-4k {
-				//200000000 error
-				//190000000 error
-				//185000000 error
-				//180000000 ok
-				//150000000 ok
-				//130000000 ok
-				//120000000 ok
-				//100000000 ok
-				clock-frequency = <200000000>;
+				clock-frequency = <250000000>;
 				hactive = <3840>;
 				vactive = <2160>;
-				hfront-porch = <200>;
+				hfront-porch = <1200>;
 				hsync-len = <20>;
 				hback-porch = <30>;
 				vfront-porch = <4>;
@@ -134,14 +126,6 @@
 				pixelclk-active = <0>;
 			};
 			timing_5k: timing-5k {
-				//200000000 error
-				//190000000 error
-				//185000000 error
-				//180000000 ok
-				//150000000 ok
-				//130000000 ok
-				//120000000 ok
-				//100000000 ok
 				clock-frequency = <250000000>;
 				hactive = <5120>;
 				vactive = <2880>;

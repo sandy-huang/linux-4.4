@@ -226,7 +226,7 @@ static const int ov2685_test_pattern_val[] = {
 };
 
 static const struct ov2685_mode supported_modes[] = {
-#if 0
+#if 1
 //4k
 	{
 		.width = 3840,
