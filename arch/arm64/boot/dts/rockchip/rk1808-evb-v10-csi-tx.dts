@@ -41,7 +41,7 @@
 		<200000000>, <816000000>,
 		<200000000>, <100000000>,
 		<300000000>, <200000000>,
-		<100000000>, <250000000>;
+		<100000000>, <237500000>;
 };
 #else
 &cru {
@@ -78,7 +78,7 @@
 		dsi,lanes = <4>;
 
 		display-timings {
-			native-mode = <&timing_4k>;
+			native-mode = <&timing_5k>;
 
 			timing_720p: timing-720p {
 				clock-frequency = <32000000>;
@@ -115,7 +115,7 @@
 				hactive = <3840>;
 				vactive = <2160>;
 				hfront-porch = <1200>;
-				hsync-len = <20>;
+				hsync-len = <500>;
 				hback-porch = <30>;
 				vfront-porch = <4>;
 				vsync-len = <2>;
@@ -126,15 +126,15 @@
 				pixelclk-active = <0>;
 			};
 			timing_5k: timing-5k {
-				clock-frequency = <250000000>;
+				clock-frequency = <237500000>;
 				hactive = <5120>;
 				vactive = <2880>;
 				hfront-porch = <1200>;
 				hsync-len = <70>;
 				hback-porch = <30>;
-				vfront-porch = <4>;
-				vsync-len = <2>;
-				vback-porch = <4>;
+				vfront-porch = <40>;
+				vsync-len = <20>;
+				vback-porch = <40>;
 				hsync-active = <0>;
 				vsync-active = <0>;
 				de-active = <0>;

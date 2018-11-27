@@ -59,7 +59,7 @@
  *
  **********************************************************************/
 
-static bool is_support_iommu = true;
+static bool is_support_iommu = false;
 
 static LIST_HEAD(rockchip_drm_subdrv_list);
 static DEFINE_MUTEX(subdrv_list_mutex);
