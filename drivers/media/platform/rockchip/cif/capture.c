@@ -1341,11 +1341,11 @@ static int rkcif_querycap(struct file *file, void *priv,
 static int rkcif_s_crop(struct file *file, void *fh, const struct v4l2_crop *a)
 {
 	struct rkcif_stream *stream = video_drvdata(file);
-	struct rkcif_device *dev = stream->cifdev;
+	//struct rkcif_device *dev = stream->cifdev;
 	const struct v4l2_rect *rect = &a->c;
 	int ret;
 
-	v4l2_info(&dev->v4l2_dev, "S_CROP(%ux%u@%u:%u) type: %d\n",
+	printk("S_CROP(%ux%u@%u:%u) type: %d\n",
 		  rect->width, rect->height, rect->left, rect->top, a->type);
 
 	ret = rkcif_sanity_check_fmt(stream, rect);
@@ -1362,6 +1362,7 @@ static int rkcif_g_crop(struct file *file, void *fh, struct v4l2_crop *a)
 {
 	struct rkcif_stream *stream = video_drvdata(file);
 
+	printk("hjc>>>%s[%d]\n", __func__,__LINE__);
 	a->c = stream->crop;
 
 	return 0;
@@ -1566,10 +1567,11 @@ void rkcif_irq_pingpong(struct rkcif_device *cif_dev)
 				return;
 			}
 
-			if (stream->frame_idx == 0)
+			if (stream->frame_idx == 0) {
 				stream->frame_phase =
 					intstat & CSI_FRAME0_END_ID0 ? 0 : 1;
-			else
+				pr_info("firat stream->frame_phase=%d\n", stream->frame_phase);
+			} else
 				stream->frame_phase ^= 1;
 
 			if (intstat & CSI_FRAME0_END_ID0 &&

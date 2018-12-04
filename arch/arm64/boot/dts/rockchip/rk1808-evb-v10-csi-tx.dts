@@ -41,7 +41,7 @@
 		<200000000>, <816000000>,
 		<200000000>, <100000000>,
 		<300000000>, <200000000>,
-		<100000000>, <237500000>;
+		<100000000>, <100000000>;
 };
 #else
 &cru {
@@ -78,7 +78,7 @@
 		dsi,lanes = <4>;
 
 		display-timings {
-			native-mode = <&timing_5k>;
+			native-mode = <&timing_4k_30hz>;
 
 			timing_720p: timing-720p {
 				clock-frequency = <32000000>;
@@ -110,26 +110,41 @@
 				de-active = <0>;
 				pixelclk-active = <0>;
 			};
+			timing_4k_30hz: timing-4k-30hz {
+				clock-frequency = <100000000>;//OV2685_LINK_FREQ_330MHZ 400M
+				hactive = <3840>;
+				vactive = <2160>;
+				hfront-porch = <100>;
+				hsync-len = <70>;
+				hback-porch = <30>;
+				vfront-porch = <40>;
+				vsync-len = <20>;
+				vback-porch = <40>;
+				hsync-active = <0>;
+				vsync-active = <0>;
+				de-active = <0>;
+				pixelclk-active = <0>;
+			};
 			timing_4k: timing-4k {
-				clock-frequency = <250000000>;
+				clock-frequency = <200000000>; //OV2685_LINK_FREQ_330MHZ 800M
 				hactive = <3840>;
 				vactive = <2160>;
 				hfront-porch = <1200>;
-				hsync-len = <500>;
+				hsync-len = <70>;
 				hback-porch = <30>;
-				vfront-porch = <4>;
-				vsync-len = <2>;
-				vback-porch = <4>;
+				vfront-porch = <40>;
+				vsync-len = <20>;
+				vback-porch = <40>;
 				hsync-active = <0>;
 				vsync-active = <0>;
 				de-active = <0>;
 				pixelclk-active = <0>;
 			};
 			timing_5k: timing-5k {
-				clock-frequency = <237500000>;
+				clock-frequency = <100000000>;
 				hactive = <5120>;
 				vactive = <2880>;
-				hfront-porch = <1200>;
+				hfront-porch = <100>;
 				hsync-len = <70>;
 				hback-porch = <30>;
 				vfront-porch = <40>;

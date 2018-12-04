@@ -202,7 +202,7 @@ static struct regval ov2685_1600x1200_regs[] = {
 	{REG_NULL, 0x00}
 };
 
-#define OV2685_LINK_FREQ_330MHZ		950000000
+#define OV2685_LINK_FREQ_330MHZ		400000000
 static const s64 link_freq_menu_items[] = {
 	OV2685_LINK_FREQ_330MHZ
 };
@@ -226,7 +226,7 @@ static const int ov2685_test_pattern_val[] = {
 };
 
 static const struct ov2685_mode supported_modes[] = {
-#if 0
+#if 1
 //4k
 	{
 		.width = 3840,

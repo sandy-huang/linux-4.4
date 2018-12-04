@@ -491,7 +491,7 @@ rockchip_mipi_csi_calc_bandwidth(struct rockchip_mipi_csi *csi)
 		/*
 		 * vop raw 1 cycle pclk can process 4 pixel, so multiply 4.
 		 */
-		tmp = mpclk * (bpp / lanes) * 4;
+		tmp = mpclk * (bpp / lanes) * 4 * 5 / 4;
 		if (tmp <= max_mbps)
 			target_mbps = tmp;
 		else
@@ -609,6 +609,7 @@ static void rockchip_mipi_csi_path_config(struct rockchip_mipi_csi *csi)
 		WARN_ON(1);
 	}
 
+	//csi->path_mode = BYPASS_PATH;
 	if (csi->path_mode == VOP_PATH) {
 		/* bypass select */
 		mask = m_BYPASS_SELECT;
@@ -647,8 +648,8 @@ static void rockchip_mipi_csi_path_config(struct rockchip_mipi_csi *csi)
 		csi_mask_write(csi, CSITX_VOP_PATH_CTRL, mask, val, true);
 
 		/* enable bypass path */
-		mask = m_BYPASS_PATH_EN;
-		val = v_BYPASS_PATH_EN(1);
+		mask = m_BYPASS_PATH_EN | m_BYPASS_WC_USERDEFINE_EN;
+		val = v_BYPASS_PATH_EN(1) | v_VOP_WC_USERDEFINE(vop_wc);
 		csi_mask_write(csi, CSITX_BYPASS_PATH_CTRL, mask, val, true);
 
 		/* enable idi_48bit path */
