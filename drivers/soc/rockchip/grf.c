@@ -29,6 +29,7 @@ struct rockchip_grf_info {
 };
 
 #define PX30_GRF_SOC_CON5		0x414
+#define PX30_GRF_CPU_CON1       0x504
 
 static const struct rockchip_grf_value px30_defaults[] __initconst = {
 	/*
@@ -36,6 +37,7 @@ static const struct rockchip_grf_value px30_defaults[] __initconst = {
 	 * The counter value is calculated based on 24MHz clock.
 	 */
 	{ "jtag switching delay", PX30_GRF_SOC_CON5, 0x7270E00},
+    { "jtag switching", PX30_GRF_CPU_CON1, HIWORD_UPDATE(0, 1, 7) },
 };
 
 static const struct rockchip_grf_info px30_grf __initconst = {
