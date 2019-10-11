@@ -3,7 +3,7 @@
 # Makefile for the Rockchip RK618 CRU driver.
 #
 
-obj-$(CONFIG_MFD_RK618) += clk-regmap-mux.o \
+obj-$(CONFIG_MFD_RK628) += clk-regmap-mux.o \
 			   clk-regmap-divider.o \
 			   clk-regmap-gate.o \
 			   clk-regmap-composite.o \
