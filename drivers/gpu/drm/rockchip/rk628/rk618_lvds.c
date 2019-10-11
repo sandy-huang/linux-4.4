@@ -22,8 +22,6 @@
 #include <video/of_display_timing.h>
 #include <video/videomode.h>
 
-#include "rk618_dither.h"
-
 enum {
 	LVDS_8BIT_MODE_FORMAT_1,
 	LVDS_8BIT_MODE_FORMAT_2,
@@ -104,8 +102,6 @@ static void rk618_lvds_bridge_enable(struct drm_bridge *bridge)
 	u32 value;
 
 	clk_prepare_enable(lvds->clock);
-
-	rk618_frc_dclk_invert(lvds->parent);
 
 	value = LVDS_CON_CHA0TTL_DISABLE | LVDS_CON_CHA1TTL_DISABLE |
 		LVDS_CON_CHA0_POWER_UP | LVDS_CON_CBG_POWER_UP |

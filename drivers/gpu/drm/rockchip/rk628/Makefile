@@ -3,10 +3,5 @@
 # Makefile for the Rockchip RK618 display bridge driver.
 #
 
-obj-$(CONFIG_DRM_ROCKCHIP_RK628) += rk618_scaler.o \
-				    rk618_vif.o \
-				    rk618_dither.o \
-				    rk618_lvds.o \
-				    rk618_rgb.o \
+obj-$(CONFIG_DRM_ROCKCHIP_RK628) += rk618_lvds.o \
 				    rk618_hdmi.o \
-				    rk618_dsi.o
