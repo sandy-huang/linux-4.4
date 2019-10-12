@@ -22,6 +22,28 @@
 #include <video/of_display_timing.h>
 #include <video/videomode.h>
 
+#define HOSTREG(x)		((x) + 0x0)//todo
+#define GVI_SYS_CTRL0		HOSTREG(0x0000)
+#define GVI_SYS_CTRL1		HOSTREG(0x0004)
+#define GVI_SYS_CTRL2		HOSTREG(0x0008)
+#define GVI_SYS_CTRL3		HOSTREG(0x000c)
+#define GVI_VERSION		HOSTREG(0x0010)
+#define GVI_SYS_RST		HOSTREG(0x0014)
+#define GVI_LINE_FLAG		HOSTREG(0x0018)
+#define GVI_STATUS		HOSTREG(0x001c)
+#define GVI_PHY_CTRL0		HOSTREG(0x0020)
+#define GVI_PHY_CTRL1		HOSTREG(0x0024)
+#define GVI_PHY_CTRL2		HOSTREG(0x0028)
+#define GVI_PLL_LOCK_TIMEOUT	HOSTREG(0x0030)
+#define GVI_HTPDN_TIMEOUT	HOSTREG(0x0034)
+#define GVI_LOCKN_TIMEOUT	HOSTREG(0x0038)
+#define GVI_WAIT_LOCKN		HOSTREG(0x003C)
+#define GVI_WAIT_HTPDN		HOSTREG(0x0040)
+#define GVI_INTR_EN		HOSTREG(0x0050)
+#define GVI_INTR_CLR		HOSTREG(0x0054)
+#define GVI_INTR_RAW_STATUS	HOSTREG(0x0058)
+#define GVI_INTR_STATUS		HOSTREG(0x005c)
+
 struct rk628_gvi {
 	struct drm_bridge base;
 	struct drm_connector connector;
@@ -30,7 +52,9 @@ struct rk628_gvi {
 	struct regmap *regmap;
 	struct clk *clock;
 	struct rk618 *parent;
-	bool dual_channel;
+	bool division_mode;
+	u8 lane_num;
+	u8 byte_mode;
 	u32 format;
 };
 
@@ -100,7 +124,7 @@ static void rk628_gvi_bridge_enable(struct drm_bridge *bridge)
 		LVDS_CON_CHA0_POWER_UP | LVDS_CON_CBG_POWER_UP |
 		LVDS_CON_PLL_POWER_UP | LVDS_CON_SELECT(gvi->format);
 
-	if (gvi->dual_channel)
+	if (gvi->division_mode)
 		value |= LVDS_CON_CHA1_POWER_UP | LVDS_DCLK_INV |
 			 LVDS_CON_CHASEL_DOUBLE_CHANNEL;
 	else
@@ -197,11 +221,21 @@ static int rk628_gvi_parse_dt(struct rk628_gvi *gvi)
 {
 	struct device *dev = gvi->dev;
 
-	gvi->dual_channel = of_property_read_bool(dev->of_node,
-						   "dual-channel");
+	gvi->division_mode = of_property_read_bool(dev->of_node,
+						   "division-mode");
 
 	return 0;
 }
+
+static const struct regmap_config rk628_gvi_regmap_config = {
+	.name = "gvi",
+	.reg_bits = 16,
+	.val_bits = 32,
+	.reg_stride = 4,
+	.max_register = GVI_INTR_STATUS,
+	.reg_format_endian = REGMAP_ENDIAN_NATIVE,
+	.val_format_endian = REGMAP_ENDIAN_NATIVE,
+};
 
 static int rk628_gvi_probe(struct platform_device *pdev)
 {
@@ -228,7 +262,8 @@ static int rk628_gvi_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	gvi->regmap = dev_get_regmap(dev->parent, NULL);
+	gvi->regmap = devm_regmap_init_i2c(rk618->client,
+					   &rk628_gvi_regmap_config);
 	if (!gvi->regmap)
 		return -ENODEV;
 
