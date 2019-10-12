@@ -22,14 +22,7 @@
 #include <video/of_display_timing.h>
 #include <video/videomode.h>
 
-enum {
-	LVDS_8BIT_MODE_FORMAT_1,
-	LVDS_8BIT_MODE_FORMAT_2,
-	LVDS_8BIT_MODE_FORMAT_3,
-	LVDS_6BIT_MODE,
-};
-
-struct rk618_lvds {
+struct rk628_gvi {
 	struct drm_bridge base;
 	struct drm_connector connector;
 	struct drm_panel *panel;
@@ -41,105 +34,105 @@ struct rk618_lvds {
 	u32 format;
 };
 
-static inline struct rk618_lvds *bridge_to_lvds(struct drm_bridge *b)
+static inline struct rk628_gvi *bridge_to_gvi(struct drm_bridge *b)
 {
-	return container_of(b, struct rk618_lvds, base);
+	return container_of(b, struct rk628_gvi, base);
 }
 
-static inline struct rk618_lvds *connector_to_lvds(struct drm_connector *c)
+static inline struct rk628_gvi *connector_to_gvi(struct drm_connector *c)
 {
-	return container_of(c, struct rk618_lvds, connector);
+	return container_of(c, struct rk628_gvi, connector);
 }
 
 static struct drm_encoder *
-rk618_lvds_connector_best_encoder(struct drm_connector *connector)
+rk628_gvi_connector_best_encoder(struct drm_connector *connector)
 {
-	struct rk618_lvds *lvds = connector_to_lvds(connector);
+	struct rk628_gvi *gvi = connector_to_gvi(connector);
 
-	return lvds->base.encoder;
+	return gvi->base.encoder;
 }
 
-static int rk618_lvds_connector_get_modes(struct drm_connector *connector)
+static int rk628_gvi_connector_get_modes(struct drm_connector *connector)
 {
-	struct rk618_lvds *lvds = connector_to_lvds(connector);
+	struct rk628_gvi *gvi = connector_to_gvi(connector);
 
-	return drm_panel_get_modes(lvds->panel);
+	return drm_panel_get_modes(gvi->panel);
 }
 
 static const struct drm_connector_helper_funcs
-rk618_lvds_connector_helper_funcs = {
-	.get_modes = rk618_lvds_connector_get_modes,
-	.best_encoder = rk618_lvds_connector_best_encoder,
+rk628_gvi_connector_helper_funcs = {
+	.get_modes = rk628_gvi_connector_get_modes,
+	.best_encoder = rk628_gvi_connector_best_encoder,
 };
 
 static enum drm_connector_status
-rk618_lvds_connector_detect(struct drm_connector *connector, bool force)
+rk628_gvi_connector_detect(struct drm_connector *connector, bool force)
 {
 	return connector_status_connected;
 }
 
-static void rk618_lvds_connector_destroy(struct drm_connector *connector)
+static void rk628_gvi_connector_destroy(struct drm_connector *connector)
 {
-	struct rk618_lvds *lvds = connector_to_lvds(connector);
+	struct rk628_gvi *gvi = connector_to_gvi(connector);
 
-	drm_panel_detach(lvds->panel);
+	drm_panel_detach(gvi->panel);
 	drm_connector_cleanup(connector);
 }
 
-static const struct drm_connector_funcs rk618_lvds_connector_funcs = {
+static const struct drm_connector_funcs rk628_gvi_connector_funcs = {
 	.dpms = drm_atomic_helper_connector_dpms,
-	.detect = rk618_lvds_connector_detect,
+	.detect = rk628_gvi_connector_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
-	.destroy = rk618_lvds_connector_destroy,
+	.destroy = rk628_gvi_connector_destroy,
 	.reset = drm_atomic_helper_connector_reset,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
 };
 
-static void rk618_lvds_bridge_enable(struct drm_bridge *bridge)
+static void rk628_gvi_bridge_enable(struct drm_bridge *bridge)
 {
-	struct rk618_lvds *lvds = bridge_to_lvds(bridge);
+	struct rk628_gvi *gvi = bridge_to_gvi(bridge);
 	u32 value;
 
-	clk_prepare_enable(lvds->clock);
+	clk_prepare_enable(gvi->clock);
 
 	value = LVDS_CON_CHA0TTL_DISABLE | LVDS_CON_CHA1TTL_DISABLE |
 		LVDS_CON_CHA0_POWER_UP | LVDS_CON_CBG_POWER_UP |
-		LVDS_CON_PLL_POWER_UP | LVDS_CON_SELECT(lvds->format);
+		LVDS_CON_PLL_POWER_UP | LVDS_CON_SELECT(gvi->format);
 
-	if (lvds->dual_channel)
+	if (gvi->dual_channel)
 		value |= LVDS_CON_CHA1_POWER_UP | LVDS_DCLK_INV |
 			 LVDS_CON_CHASEL_DOUBLE_CHANNEL;
 	else
 		value |= LVDS_CON_CHA1_POWER_DOWN |
 			 LVDS_CON_CHASEL_SINGLE_CHANNEL;
 
-	regmap_write(lvds->regmap, RK618_LVDS_CON, value);
+	regmap_write(gvi->regmap, RK618_LVDS_CON, value);
 
-	drm_panel_prepare(lvds->panel);
-	drm_panel_enable(lvds->panel);
+	drm_panel_prepare(gvi->panel);
+	drm_panel_enable(gvi->panel);
 }
 
-static void rk618_lvds_bridge_disable(struct drm_bridge *bridge)
+static void rk628_gvi_bridge_disable(struct drm_bridge *bridge)
 {
-	struct rk618_lvds *lvds = bridge_to_lvds(bridge);
+	struct rk628_gvi *gvi = bridge_to_gvi(bridge);
 
-	drm_panel_disable(lvds->panel);
-	drm_panel_unprepare(lvds->panel);
+	drm_panel_disable(gvi->panel);
+	drm_panel_unprepare(gvi->panel);
 
-	regmap_write(lvds->regmap, RK618_LVDS_CON,
+	regmap_write(gvi->regmap, RK618_LVDS_CON,
 		     LVDS_CON_CHA0_POWER_DOWN | LVDS_CON_CHA1_POWER_DOWN |
 		     LVDS_CON_CBG_POWER_DOWN | LVDS_CON_PLL_POWER_DOWN);
 
-	clk_disable_unprepare(lvds->clock);
+	clk_disable_unprepare(gvi->clock);
 }
 
-static void rk618_lvds_bridge_mode_set(struct drm_bridge *bridge,
+static void rk628_gvi_bridge_mode_set(struct drm_bridge *bridge,
 				       struct drm_display_mode *mode,
 				       struct drm_display_mode *adj)
 {
-	struct rk618_lvds *lvds = bridge_to_lvds(bridge);
-	struct drm_connector *connector = &lvds->connector;
+	struct rk628_gvi *gvi = bridge_to_gvi(bridge);
+	struct drm_connector *connector = &gvi->connector;
 	struct drm_display_info *info = &connector->display_info;
 	u32 bus_format;
 
@@ -150,93 +143,93 @@ static void rk618_lvds_bridge_mode_set(struct drm_bridge *bridge,
 
 	switch (bus_format) {
 	case MEDIA_BUS_FMT_RGB666_1X7X3_SPWG:	/* jeida-18 */
-		lvds->format = LVDS_6BIT_MODE;
+		gvi->format = 0;
 		break;
 	case MEDIA_BUS_FMT_RGB888_1X7X4_JEIDA:	/* jeida-24 */
-		lvds->format = LVDS_8BIT_MODE_FORMAT_2;
+		gvi->format = 0;
 		break;
 	case MEDIA_BUS_FMT_RGB888_1X7X4_SPWG:	/* vesa-24 */
-		lvds->format = LVDS_8BIT_MODE_FORMAT_1;
+		gvi->format = 0;
 		break;
 	default:
-		lvds->format = LVDS_8BIT_MODE_FORMAT_3;
+		gvi->format = 0;
 		break;
 	}
 }
 
-static int rk618_lvds_bridge_attach(struct drm_bridge *bridge)
+static int rk628_gvi_bridge_attach(struct drm_bridge *bridge)
 {
-	struct rk618_lvds *lvds = bridge_to_lvds(bridge);
-	struct device *dev = lvds->dev;
-	struct drm_connector *connector = &lvds->connector;
+	struct rk628_gvi *gvi = bridge_to_gvi(bridge);
+	struct device *dev = gvi->dev;
+	struct drm_connector *connector = &gvi->connector;
 	struct drm_device *drm = bridge->dev;
 	int ret;
 
 	connector->port = dev->of_node;
 
-	ret = drm_connector_init(drm, connector, &rk618_lvds_connector_funcs,
+	ret = drm_connector_init(drm, connector, &rk628_gvi_connector_funcs,
 				 DRM_MODE_CONNECTOR_LVDS);
 	if (ret) {
-		dev_err(lvds->dev, "Failed to initialize connector with drm\n");
+		dev_err(gvi->dev, "Failed to initialize connector with drm\n");
 		return ret;
 	}
 
-	drm_connector_helper_add(connector, &rk618_lvds_connector_helper_funcs);
+	drm_connector_helper_add(connector, &rk628_gvi_connector_helper_funcs);
 	drm_mode_connector_attach_encoder(connector, bridge->encoder);
 
-	ret = drm_panel_attach(lvds->panel, connector);
+	ret = drm_panel_attach(gvi->panel, connector);
 	if (ret) {
-		dev_err(lvds->dev, "Failed to attach panel\n");
+		dev_err(gvi->dev, "Failed to attach panel\n");
 		return ret;
 	}
 
 	return 0;
 }
 
-static const struct drm_bridge_funcs rk618_lvds_bridge_funcs = {
-	.attach = rk618_lvds_bridge_attach,
-	.mode_set = rk618_lvds_bridge_mode_set,
-	.enable = rk618_lvds_bridge_enable,
-	.disable = rk618_lvds_bridge_disable,
+static const struct drm_bridge_funcs rk628_gvi_bridge_funcs = {
+	.attach = rk628_gvi_bridge_attach,
+	.mode_set = rk628_gvi_bridge_mode_set,
+	.enable = rk628_gvi_bridge_enable,
+	.disable = rk628_gvi_bridge_disable,
 };
 
-static int rk618_lvds_parse_dt(struct rk618_lvds *lvds)
+static int rk628_gvi_parse_dt(struct rk628_gvi *gvi)
 {
-	struct device *dev = lvds->dev;
+	struct device *dev = gvi->dev;
 
-	lvds->dual_channel = of_property_read_bool(dev->of_node,
+	gvi->dual_channel = of_property_read_bool(dev->of_node,
 						   "dual-channel");
 
 	return 0;
 }
 
-static int rk618_lvds_probe(struct platform_device *pdev)
+static int rk628_gvi_probe(struct platform_device *pdev)
 {
 	struct rk618 *rk618 = dev_get_drvdata(pdev->dev.parent);
 	struct device *dev = &pdev->dev;
 	struct device_node *endpoint;
-	struct rk618_lvds *lvds;
+	struct rk628_gvi *gvi;
 	int ret;
 
 	if (!of_device_is_available(dev->of_node))
 		return -ENODEV;
 
-	lvds = devm_kzalloc(dev, sizeof(*lvds), GFP_KERNEL);
-	if (!lvds)
+	gvi = devm_kzalloc(dev, sizeof(*gvi), GFP_KERNEL);
+	if (!gvi)
 		return -ENOMEM;
 
-	lvds->dev = dev;
-	lvds->parent = rk618;
-	platform_set_drvdata(pdev, lvds);
+	gvi->dev = dev;
+	gvi->parent = rk618;
+	platform_set_drvdata(pdev, gvi);
 
-	ret = rk618_lvds_parse_dt(lvds);
+	ret = rk628_gvi_parse_dt(gvi);
 	if (ret) {
 		dev_err(dev, "failed to parse DT\n");
 		return ret;
 	}
 
-	lvds->regmap = dev_get_regmap(dev->parent, NULL);
-	if (!lvds->regmap)
+	gvi->regmap = dev_get_regmap(dev->parent, NULL);
+	if (!gvi->regmap)
 		return -ENODEV;
 
 	endpoint = of_graph_get_endpoint_by_regs(dev->of_node, 1, -1);
@@ -250,24 +243,24 @@ static int rk618_lvds_probe(struct platform_device *pdev)
 			return -ENODEV;
 		}
 
-		lvds->panel = of_drm_find_panel(remote);
+		gvi->panel = of_drm_find_panel(remote);
 		of_node_put(remote);
-		if (!lvds->panel) {
+		if (!gvi->panel) {
 			dev_err(dev, "Waiting for panel driver\n");
 			return -EPROBE_DEFER;
 		}
 	}
 
-	lvds->clock = devm_clk_get(dev, "lvds");
-	if (IS_ERR(lvds->clock)) {
-		ret = PTR_ERR(lvds->clock);
-		dev_err(dev, "failed to get lvds clock: %d\n", ret);
+	gvi->clock = devm_clk_get(dev, "gvi");
+	if (IS_ERR(gvi->clock)) {
+		ret = PTR_ERR(gvi->clock);
+		dev_err(dev, "failed to get gvi clock: %d\n", ret);
 		return ret;
 	}
 
-	lvds->base.funcs = &rk618_lvds_bridge_funcs;
-	lvds->base.of_node = dev->of_node;
-	ret = drm_bridge_add(&lvds->base);
+	gvi->base.funcs = &rk628_gvi_bridge_funcs;
+	gvi->base.of_node = dev->of_node;
+	ret = drm_bridge_add(&gvi->base);
 	if (ret) {
 		dev_err(dev, "failed to add drm_bridge: %d\n", ret);
 		return ret;
@@ -276,31 +269,31 @@ static int rk618_lvds_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int rk618_lvds_remove(struct platform_device *pdev)
+static int rk628_gvi_remove(struct platform_device *pdev)
 {
-	struct rk618_lvds *lvds = platform_get_drvdata(pdev);
+	struct rk628_gvi *gvi = platform_get_drvdata(pdev);
 
-	drm_bridge_remove(&lvds->base);
+	drm_bridge_remove(&gvi->base);
 
 	return 0;
 }
 
-static const struct of_device_id rk618_lvds_of_match[] = {
-	{ .compatible = "rockchip,rk618-lvds", },
+static const struct of_device_id rk628_gvi_of_match[] = {
+	{ .compatible = "rockchip,rk628-gvi", },
 	{},
 };
-MODULE_DEVICE_TABLE(of, rk618_lvds_of_match);
+MODULE_DEVICE_TABLE(of, rk628_gvi_of_match);
 
-static struct platform_driver rk618_lvds_driver = {
+static struct platform_driver rk628_gvi_driver = {
 	.driver = {
-		.name = "rk618-lvds",
-		.of_match_table = of_match_ptr(rk618_lvds_of_match),
+		.name = "rk628-gvi",
+		.of_match_table = of_match_ptr(rk628_gvi_of_match),
 	},
-	.probe = rk618_lvds_probe,
-	.remove = rk618_lvds_remove,
+	.probe = rk628_gvi_probe,
+	.remove = rk628_gvi_remove,
 };
-module_platform_driver(rk618_lvds_driver);
+module_platform_driver(rk628_gvi_driver);
 
 MODULE_AUTHOR("Wyon Bi <bivvy.bi@rock-chips.com>");
-MODULE_DESCRIPTION("Rockchip RK618 LVDS driver");
+MODULE_DESCRIPTION("Rockchip RK628 GVI driver");
 MODULE_LICENSE("GPL v2");
